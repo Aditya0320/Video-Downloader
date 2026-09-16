@@ -41,6 +41,7 @@ const courseHeading = document.getElementById('courseHeading');
 const courseInstructor = document.getElementById('courseInstructor');
 const courseLectureCount = document.getElementById('courseLectureCount');
 const destFolderLabel = document.getElementById('destFolderLabel');
+const calloutFolder = document.getElementById('calloutFolder');
 const badgeFormat = document.getElementById('badgeFormat');
 
 // Action Buttons
@@ -73,6 +74,18 @@ const activeFilename = document.getElementById('activeFilename');
 const activeProgressBar = document.getElementById('activeProgressBar');
 const btnCancelActive = document.getElementById('btnCancelActive');
 const toastContainer = document.getElementById('toastContainer');
+
+// Folder Modal Elements
+const folderModal = document.getElementById('folderModal');
+const inputCustomFolder = document.getElementById('inputCustomFolder');
+const btnEditFolder = document.getElementById('btnEditFolder');
+const btnChangeFolderNav = document.getElementById('btnChangeFolderNav');
+const btnCloseModal = document.getElementById('btnCloseModal');
+const btnCancelModal = document.getElementById('btnCancelModal');
+const btnSaveModal = document.getElementById('btnSaveModal');
+const btnBrowseNative = document.getElementById('btnBrowseNative');
+const btnBrowseText = document.getElementById('btnBrowseText');
+const pathChips = document.querySelectorAll('.path-chip');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -174,11 +187,16 @@ function updateCourseHeaderUI() {
 }
 
 // Load Course from URL
-async function loadCourseUrl(url) {
-    if (!url) return;
+async function loadCourseUrl(rawUrl) {
+    if (!rawUrl) return;
+
+    let url = rawUrl.trim();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+    }
 
     btnLoadCourse.disabled = true;
-    btnLoadText.textContent = 'Loading Course...';
+    btnLoadText.textContent = 'Loading Course (3-5s)...';
 
     try {
         const res = await fetch('/api/load-course', {
@@ -190,7 +208,7 @@ async function loadCourseUrl(url) {
         const data = await res.json();
         if (data.success) {
             applyCourseData(data);
-            showToast(`Loaded: ${data.course.title}`, 'success');
+            showToast(`Loaded: ${data.course.title} (${data.lessons.length} lessons)`, 'success');
         } else {
             showToast(data.error || 'Failed to load course from URL', 'error');
         }
@@ -249,7 +267,7 @@ function createLessonCard(lesson) {
     const isQueued = status === 'queued';
     const hasTranscript = statusInfo.transcriptExists;
 
-    let statusText = lesson.vimeoId ? 'Ready (1080p)' : 'Audio Only';
+    let statusText = lesson.vimeoId ? 'Ready (1080p)' : 'Audio Stream';
     if (isCompleted) statusText = 'Completed (Video + Transcript)';
     else if (status === 'muxing') statusText = 'Muxing MP4 with ffmpeg...';
     else if (isDownloading) statusText = `Downloading (${Math.floor(statusInfo.progress || 0)}%)`;
@@ -305,7 +323,6 @@ function createLessonCard(lesson) {
         </div>
     `;
 
-    // Checkbox listener
     const chk = card.querySelector('.lesson-checkbox');
     chk.addEventListener('change', (e) => {
         if (e.target.checked) {
@@ -316,7 +333,6 @@ function createLessonCard(lesson) {
         updateSelectedUI();
     });
 
-    // Download Button listener
     const btnDl = card.querySelector(`#btn-dl-${lesson.lessonNumber}`);
     btnDl.addEventListener('click', () => {
         downloadLessons([lesson.lessonNumber]);
@@ -396,7 +412,6 @@ function updateAllStats() {
     overallProgressText.textContent = `${percent}%`;
     overallProgressBar.style.width = `${percent}%`;
 
-    // Filter tab count update
     document.querySelector('.tab[data-filter="all"]').textContent = `All (${total})`;
     document.querySelector('.tab[data-filter="pending"]').textContent = `Pending (${total - completed})`;
     document.querySelector('.tab[data-filter="completed"]').textContent = `Completed (${completed})`;
@@ -455,6 +470,16 @@ async function cancelDownload(all = false) {
     } catch (err) {
         console.error('Cancel error:', err);
     }
+}
+
+// Modal Handlers
+function openFolderModal() {
+    if (inputCustomFolder) inputCustomFolder.value = state.targetDir;
+    if (folderModal) folderModal.style.display = 'flex';
+}
+
+function closeFolderModal() {
+    if (folderModal) folderModal.style.display = 'none';
 }
 
 // Setup Event Listeners
@@ -557,31 +582,13 @@ function setupEventListeners() {
             await fetch('/api/open-folder', { method: 'POST' });
             showToast(`Opening ${state.targetDir}...`, 'success');
         } catch (e) {
-            showToast('Failed to open folder', 'error');
+            showToast('Opening folder...', 'info');
         }
     });
 
-    // Folder Modal Elements
-    const folderModal = document.getElementById('folderModal');
-    const inputCustomFolder = document.getElementById('inputCustomFolder');
-    const btnEditFolder = document.getElementById('btnEditFolder');
-    const btnChangeFolderNav = document.getElementById('btnChangeFolderNav');
-    const btnCloseModal = document.getElementById('btnCloseModal');
-    const btnCancelModal = document.getElementById('btnCancelModal');
-    const btnSaveModal = document.getElementById('btnSaveModal');
-    const btnBrowseNative = document.getElementById('btnBrowseNative');
-    const pathChips = document.querySelectorAll('.path-chip');
-
-    function openFolderModal() {
-        if (inputCustomFolder) inputCustomFolder.value = state.targetDir;
-        if (folderModal) folderModal.style.display = 'flex';
-    }
-
-    function closeFolderModal() {
-        if (folderModal) folderModal.style.display = 'none';
-    }
-
+    // Folder Modal Events
     if (btnEditFolder) btnEditFolder.addEventListener('click', openFolderModal);
+    if (calloutFolder) calloutFolder.addEventListener('click', openFolderModal);
     if (btnChangeFolderNav) btnChangeFolderNav.addEventListener('click', openFolderModal);
     if (btnCloseModal) btnCloseModal.addEventListener('click', closeFolderModal);
     if (btnCancelModal) btnCancelModal.addEventListener('click', closeFolderModal);
@@ -595,20 +602,28 @@ function setupEventListeners() {
     // Native Windows Folder Picker
     if (btnBrowseNative) {
         btnBrowseNative.addEventListener('click', async () => {
-            showToast('Opening Windows Folder Dialog...', 'info');
+            if (btnBrowseText) btnBrowseText.textContent = 'Opening Picker...';
+            btnBrowseNative.disabled = true;
+            showToast('Look for the Windows Folder Picker window...', 'info');
+
             try {
                 const res = await fetch('/api/browse-folder', { method: 'POST' });
                 const data = await res.json();
                 if (data.success && data.folder) {
-                    inputCustomFolder.value = data.folder;
+                    if (inputCustomFolder) inputCustomFolder.value = data.folder;
                     state.targetDir = data.folder;
                     if (destFolderLabel) destFolderLabel.textContent = data.folder;
                     showToast(`Selected: ${data.folder}`, 'success');
                     fetchLessons();
+                } else if (data.cancelled) {
+                    showToast('Folder selection cancelled', 'info');
                 }
             } catch (err) {
                 console.error('Browse error:', err);
-                showToast('Failed to open native picker', 'error');
+                showToast('Use text box to type or paste folder path', 'info');
+            } finally {
+                if (btnBrowseText) btnBrowseText.textContent = 'Browse Windows Dialog';
+                btnBrowseNative.disabled = false;
             }
         });
     }
@@ -630,7 +645,7 @@ function setupEventListeners() {
                     state.targetDir = data.downloadDir;
                     if (destFolderLabel) destFolderLabel.textContent = data.downloadDir;
                     closeFolderModal();
-                    showToast(`Save folder updated to: ${data.downloadDir}`, 'success');
+                    showToast(`Destination saved: ${data.downloadDir}`, 'success');
                     fetchLessons();
                 } else {
                     showToast(data.error || 'Failed to set folder', 'error');

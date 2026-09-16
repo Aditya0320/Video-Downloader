@@ -73,7 +73,7 @@ app.get('/api/saved-courses', (req, res) => {
     }
 });
 
-// Set custom destination folder
+// Set custom destination folder directly
 app.post('/api/set-folder', (req, res) => {
     const { folder } = req.body;
     if (!folder) {
@@ -88,18 +88,24 @@ app.post('/api/set-folder', (req, res) => {
     }
 });
 
-// Open native Windows folder browser dialog
+// Open native Windows folder browser dialog via PowerShell
 app.post('/api/browse-folder', (req, res) => {
-    const psCmd = `powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.FolderBrowserDialog; $f.Description = 'Select Destination Folder for Video Downloads'; $f.ShowNewFolderButton = $true; if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $f.SelectedPath }"`;
-    exec(psCmd, (err, stdout) => {
+    const scriptPath = path.join(__dirname, 'browse_folder.ps1');
+    const psCmd = `powershell.exe -NoProfile -Sta -ExecutionPolicy Bypass -File "${scriptPath}"`;
+
+    exec(psCmd, { timeout: 60000 }, (err, stdout, stderr) => {
         if (err) {
-            console.error('Folder picker error:', err);
-            return res.status(500).json({ error: 'Failed to open folder picker' });
+            console.error('Folder picker error:', err, stderr);
+            return res.status(500).json({ error: 'Could not open folder picker window' });
         }
         const selected = stdout.trim();
         if (selected) {
-            const newDir = downloader.setCustomDownloadDir(selected);
-            return res.json({ success: true, folder: newDir });
+            try {
+                const newDir = downloader.setCustomDownloadDir(selected);
+                return res.json({ success: true, folder: newDir });
+            } catch (e) {
+                return res.status(500).json({ error: e.message });
+            }
         }
         res.json({ success: false, cancelled: true });
     });
@@ -136,12 +142,8 @@ app.post('/api/cancel', (req, res) => {
 
 app.post('/api/open-folder', (req, res) => {
     const downloadDir = downloader.downloadDir;
-    // Use PowerShell Invoke-Item so it doesn't fail with code 1
-    exec(`powershell -NoProfile -Command "Invoke-Item -Path '${downloadDir}'"`, (err) => {
-        if (err) {
-            console.warn('Fallback opening folder with explorer...');
-            exec(`explorer.exe "${downloadDir}"`);
-        }
+    // Explorer returns code 1 even when opening successfully, so treat as success
+    exec(`powershell.exe -NoProfile -Command "Invoke-Item -Path '${downloadDir}'"`, () => {
         res.json({ success: true });
     });
 });

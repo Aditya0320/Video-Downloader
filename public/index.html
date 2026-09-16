@@ -88,7 +88,10 @@
             </form>
 
             <div class="course-presets-row">
-                <span class="presets-label">Quick Presets:</span>
+                <span class="presets-label">Popular Courses:</span>
+                <button type="button" class="preset-chip" data-url="https://www.biblicaltraining.org/learn/institute/ot501-survey-of-the-old-testament">
+                    Survey of the Old Testament (OT501)
+                </button>
                 <button type="button" class="preset-chip active" data-url="https://www.biblicaltraining.org/learn/institute/survey-of-biblical-theology-bt504">
                     Survey of Biblical Theology (BT504)
                 </button>
@@ -114,11 +117,11 @@
                 <p class="course-instructor">Instructor: <strong id="courseInstructor">Dr. Thomas Schreiner</strong> • <span id="courseLectureCount">27 In-Depth Lectures</span></p>
                 
                 <!-- Destination Folder Bar with Interactive Edit & Browse -->
-                <div class="destination-callout">
+                <div class="destination-callout" id="calloutFolder" style="cursor: pointer;" title="Click to change destination folder">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                     </svg>
-                    <span>Target Folder: <strong id="destFolderLabel">D:\Survey of the Old Testament</strong></span>
+                    <span>Save Folder: <strong id="destFolderLabel">D:\Survey of the Old Testament</strong></span>
                     <button id="btnEditFolder" class="btn-icon" title="Change folder path">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -270,18 +273,18 @@
                 <button id="btnCloseModal" class="btn-icon" title="Close">&times;</button>
             </div>
             <div class="modal-body">
-                <p class="modal-desc">Choose where all MP4 lecture videos and text transcripts will be saved:</p>
+                <p class="modal-desc">Type, paste, or browse for the folder where MP4 videos and text transcripts will be saved:</p>
                 <div class="folder-input-row">
                     <input type="text" id="inputCustomFolder" class="styled-url-input" placeholder="e.g. D:\Survey of the Old Testament">
-                    <button id="btnBrowseNative" class="btn btn-secondary" title="Open Windows Folder Picker">
+                    <button id="btnBrowseNative" class="btn btn-secondary" title="Open Windows Folder Dialog">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                         </svg>
-                        <span>Browse...</span>
+                        <span id="btnBrowseText">Browse Windows Dialog</span>
                     </button>
                 </div>
                 <div class="quick-paths-row">
-                    <span class="quick-label">Suggestions:</span>
+                    <span class="quick-label">Quick Suggestions:</span>
                     <button type="button" class="path-chip" data-path="D:\Survey of the Old Testament">D:\Survey of the Old Testament</button>
                     <button type="button" class="path-chip" data-path="D:\BiblicalTraining">D:\BiblicalTraining</button>
                     <button type="button" class="path-chip" data-path="C:\Downloads\BiblicalTraining">C:\Downloads\BiblicalTraining</button>
