@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Binaries
+*.exe
+ffmpeg.exe
+yt-dlp.exe
+
+# Downloads & Media
+downloads/
+*.mp4
+*.part
+*.ytdl
+
+# Logs and environment
+*.log
+.env
+.DS_Store
+Thumbs.db

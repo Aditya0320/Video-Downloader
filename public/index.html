@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BiblicalTraining 1080p Video & Transcript Downloader | Survey of Biblical Theology</title>
+    <meta name="description" content="High Quality 1080p Video & Transcript Downloader for BiblicalTraining course: Survey of Biblical Theology (BT504)">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-background">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+        <div class="glow-orb orb-3"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="navbar">
+            <div class="brand">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="brand-title">BT504 Video & Transcript Downloader</h1>
+                    <p class="brand-subtitle">Survey of Biblical Theology • 27 High-Definition Lessons & Transcripts</p>
+                </div>
+            </div>
+
+            <div class="nav-actions">
+                <div class="quality-selector">
+                    <label for="qualitySelect">Quality:</label>
+                    <select id="qualitySelect" class="styled-select">
+                        <option value="1080" selected>1080p Full HD (Recommended)</option>
+                        <option value="720">720p HD</option>
+                        <option value="480">480p SD</option>
+                    </select>
+                </div>
+
+                <button id="btnOpenFolder" class="btn btn-secondary" title="Open destination folder in Windows Explorer">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>Open D:\ Folder</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Course Banner & Overview -->
+        <section class="course-hero">
+            <div class="course-info">
+                <div class="badge-row">
+                    <span class="badge badge-primary">Institute Course</span>
+                    <span class="badge badge-accent">⚡ Turbo 16-Thread (High Speed)</span>
+                    <span class="badge badge-success">Direct Vimeo 1080p Stream</span>
+                    <span class="badge badge-warning">Transcripts Included</span>
+                </div>
+                <h2 class="course-heading">Survey of Biblical Theology</h2>
+                <p class="course-instructor">Instructor: <strong>Dr. Thomas Schreiner</strong> • 27 In-Depth Lectures</p>
+                
+                <div class="destination-callout">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>Save Folder: <strong id="destFolderLabel">D:\Survey of the Old Testament</strong></span>
+                </div>
+
+                <p class="course-desc">
+                    High-speed multi-threaded downloader with automatic 16-fragment parallel connections. Automatically downloads the full lecture transcript (with outline) and muxes full 1080p video with high-bitrate stereo AAC audio.
+                </p>
+
+                <!-- Global Action Buttons -->
+                <div class="hero-actions">
+                    <button id="btnDownloadAll" class="btn btn-primary btn-large">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span>Download All 27 Videos (1080p)</span>
+                    </button>
+
+                    <button id="btnDownloadTranscripts" class="btn btn-secondary btn-large">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <span>Download All Transcripts (.txt)</span>
+                    </button>
+
+                    <button id="btnDownloadSelected" class="btn btn-secondary" disabled>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 11 12 14 22 4"></polyline>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                        <span id="btnDownloadSelectedText">Download Selected (0)</span>
+                    </button>
+
+                    <button id="btnCancelAll" class="btn btn-danger" style="display: none;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
+                        <span>Stop All Downloads</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-card">
+                <h3 class="stats-title">Collection Stats</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Lessons</span>
+                        <span id="statTotalLessons" class="stat-value">27</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Videos Downloaded</span>
+                        <span id="statCompleted" class="stat-value text-success">1</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Transcripts Saved</span>
+                        <span id="statTranscripts" class="stat-value text-accent">26</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Queue Length</span>
+                        <span id="statQueue" class="stat-value text-warning">0</span>
+                    </div>
+                </div>
+
+                <div class="overall-progress-container">
+                    <div class="progress-labels">
+                        <span>Video Completion</span>
+                        <span id="overallProgressText">4%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div id="overallProgressBar" class="progress-bar-fill" style="width: 4%;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Active Download Banner -->
+        <section id="activeDownloadSection" class="active-download-card" style="display: none;">
+            <div class="active-header">
+                <div class="active-title-group">
+                    <span class="pulsing-dot"></span>
+                    <span id="activeStatusBadge" class="badge badge-downloading">DOWNLOADING (16X TURBO)</span>
+                    <h3 id="activeTitle" class="active-lesson-title">Lesson 01: History of Biblical Theology</h3>
+                </div>
+                <button id="btnCancelActive" class="btn btn-small btn-danger-ghost">Cancel</button>
+            </div>
+
+            <div class="active-metrics">
+                <div class="metric"><span class="m-label">Progress:</span> <strong id="activePercent">0.0%</strong></div>
+                <div class="metric"><span class="m-label">Speed:</span> <strong id="activeSpeed">-- MB/s</strong></div>
+                <div class="metric"><span class="m-label">ETA:</span> <strong id="activeEta">--:--</strong></div>
+                <div class="metric"><span class="m-label">Destination File:</span> <code id="activeFilename">BT504 - Lesson 01.mp4</code></div>
+            </div>
+
+            <div class="progress-bar-bg progress-bar-large">
+                <div id="activeProgressBar" class="progress-bar-fill animated-gradient" style="width: 0%;"></div>
+            </div>
+        </section>
+
+        <!-- Search, Filter & Bulk Controls -->
+        <section class="controls-toolbar">
+            <div class="search-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Search lessons by title or lesson number...">
+            </div>
+
+            <div class="filter-tabs">
+                <button class="tab active" data-filter="all">All (27)</button>
+                <button class="tab" data-filter="pending">Pending</button>
+                <button class="tab" data-filter="completed">Completed</button>
+            </div>
+
+            <div class="select-tools">
+                <button id="btnSelectAll" class="btn btn-text">Select All</button>
+                <button id="btnDeselectAll" class="btn btn-text">Deselect All</button>
+            </div>
+        </section>
+
+        <!-- Lesson Grid -->
+        <main class="lessons-container" id="lessonsContainer">
+            <!-- Dynamically populated cards -->
+        </main>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
