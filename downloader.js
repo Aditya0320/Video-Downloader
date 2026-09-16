@@ -74,6 +74,17 @@ class DownloaderEngine extends EventEmitter {
         }
     }
 
+    setCustomDownloadDir(newDir) {
+        if (!newDir || typeof newDir !== 'string') {
+            throw new Error('Invalid directory path provided');
+        }
+        newDir = newDir.trim().replace(/^["']|["']$/g, '');
+        this.setDownloadDirectory(newDir);
+        this.initializeStatus();
+        this.emit('course-loaded', this.getCourseSummary());
+        return this.downloadDir;
+    }
+
     async loadCourseByUrl(url) {
         this.stopAll();
         console.log(`[Downloader] Loading dynamic course: ${url}`);

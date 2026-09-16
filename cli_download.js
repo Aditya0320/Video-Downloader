@@ -7,17 +7,24 @@ async function runCli() {
 
     const args = process.argv.slice(2);
 
-    // Check if a custom course URL was provided
+    // Check if custom folder or course URL was provided
     let customUrl = null;
+    let customFolder = null;
     for (const arg of args) {
         if (arg.startsWith('--url=')) {
             customUrl = arg.split('=')[1].replace(/^["']|["']$/g, '');
+        } else if (arg.startsWith('--folder=') || arg.startsWith('--dir=')) {
+            customFolder = arg.split('=')[1].replace(/^["']|["']$/g, '');
         }
     }
 
     if (customUrl) {
         console.log(`Loading custom course URL: ${customUrl}...`);
         await downloader.loadCourseByUrl(customUrl);
+    }
+
+    if (customFolder) {
+        downloader.setCustomDownloadDir(customFolder);
     }
 
     console.log(`Active Course: ${downloader.course.title} (${downloader.course.code || 'BT'})`);

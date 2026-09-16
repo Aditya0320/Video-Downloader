@@ -561,6 +561,86 @@ function setupEventListeners() {
         }
     });
 
+    // Folder Modal Elements
+    const folderModal = document.getElementById('folderModal');
+    const inputCustomFolder = document.getElementById('inputCustomFolder');
+    const btnEditFolder = document.getElementById('btnEditFolder');
+    const btnChangeFolderNav = document.getElementById('btnChangeFolderNav');
+    const btnCloseModal = document.getElementById('btnCloseModal');
+    const btnCancelModal = document.getElementById('btnCancelModal');
+    const btnSaveModal = document.getElementById('btnSaveModal');
+    const btnBrowseNative = document.getElementById('btnBrowseNative');
+    const pathChips = document.querySelectorAll('.path-chip');
+
+    function openFolderModal() {
+        if (inputCustomFolder) inputCustomFolder.value = state.targetDir;
+        if (folderModal) folderModal.style.display = 'flex';
+    }
+
+    function closeFolderModal() {
+        if (folderModal) folderModal.style.display = 'none';
+    }
+
+    if (btnEditFolder) btnEditFolder.addEventListener('click', openFolderModal);
+    if (btnChangeFolderNav) btnChangeFolderNav.addEventListener('click', openFolderModal);
+    if (btnCloseModal) btnCloseModal.addEventListener('click', closeFolderModal);
+    if (btnCancelModal) btnCancelModal.addEventListener('click', closeFolderModal);
+
+    pathChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            if (inputCustomFolder) inputCustomFolder.value = chip.dataset.path;
+        });
+    });
+
+    // Native Windows Folder Picker
+    if (btnBrowseNative) {
+        btnBrowseNative.addEventListener('click', async () => {
+            showToast('Opening Windows Folder Dialog...', 'info');
+            try {
+                const res = await fetch('/api/browse-folder', { method: 'POST' });
+                const data = await res.json();
+                if (data.success && data.folder) {
+                    inputCustomFolder.value = data.folder;
+                    state.targetDir = data.folder;
+                    if (destFolderLabel) destFolderLabel.textContent = data.folder;
+                    showToast(`Selected: ${data.folder}`, 'success');
+                    fetchLessons();
+                }
+            } catch (err) {
+                console.error('Browse error:', err);
+                showToast('Failed to open native picker', 'error');
+            }
+        });
+    }
+
+    // Save Custom Folder
+    if (btnSaveModal) {
+        btnSaveModal.addEventListener('click', async () => {
+            const path = inputCustomFolder.value.trim();
+            if (!path) return;
+
+            try {
+                const res = await fetch('/api/set-folder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ folder: path })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    state.targetDir = data.downloadDir;
+                    if (destFolderLabel) destFolderLabel.textContent = data.downloadDir;
+                    closeFolderModal();
+                    showToast(`Save folder updated to: ${data.downloadDir}`, 'success');
+                    fetchLessons();
+                } else {
+                    showToast(data.error || 'Failed to set folder', 'error');
+                }
+            } catch (e) {
+                showToast('Network error setting folder', 'error');
+            }
+        });
+    }
+
     // Quality Select
     qualitySelect.addEventListener('change', (e) => {
         state.quality = e.target.value;

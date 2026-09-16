@@ -42,6 +42,14 @@
                     </select>
                 </div>
 
+                <button id="btnChangeFolderNav" class="btn btn-secondary" title="Change destination folder to store videos">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    <span>Change Folder</span>
+                </button>
+
                 <button id="btnOpenFolder" class="btn btn-secondary" title="Open destination folder in Windows Explorer">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
@@ -105,11 +113,18 @@
                 <h2 id="courseHeading" class="course-heading">Survey of Biblical Theology</h2>
                 <p class="course-instructor">Instructor: <strong id="courseInstructor">Dr. Thomas Schreiner</strong> • <span id="courseLectureCount">27 In-Depth Lectures</span></p>
                 
+                <!-- Destination Folder Bar with Interactive Edit & Browse -->
                 <div class="destination-callout">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                     </svg>
                     <span>Target Folder: <strong id="destFolderLabel">D:\Survey of the Old Testament</strong></span>
+                    <button id="btnEditFolder" class="btn-icon" title="Change folder path">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
                 </div>
 
                 <p class="course-desc">
@@ -240,6 +255,43 @@
         <main class="lessons-container" id="lessonsContainer">
             <!-- Dynamically populated cards -->
         </main>
+    </div>
+
+    <!-- Folder Selection Modal -->
+    <div id="folderModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <h3>Select Download Destination Folder</h3>
+                </div>
+                <button id="btnCloseModal" class="btn-icon" title="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-desc">Choose where all MP4 lecture videos and text transcripts will be saved:</p>
+                <div class="folder-input-row">
+                    <input type="text" id="inputCustomFolder" class="styled-url-input" placeholder="e.g. D:\Survey of the Old Testament">
+                    <button id="btnBrowseNative" class="btn btn-secondary" title="Open Windows Folder Picker">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span>Browse...</span>
+                    </button>
+                </div>
+                <div class="quick-paths-row">
+                    <span class="quick-label">Suggestions:</span>
+                    <button type="button" class="path-chip" data-path="D:\Survey of the Old Testament">D:\Survey of the Old Testament</button>
+                    <button type="button" class="path-chip" data-path="D:\BiblicalTraining">D:\BiblicalTraining</button>
+                    <button type="button" class="path-chip" data-path="C:\Downloads\BiblicalTraining">C:\Downloads\BiblicalTraining</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btnCancelModal" class="btn btn-secondary">Cancel</button>
+                <button id="btnSaveModal" class="btn btn-primary">Save Destination</button>
+            </div>
+        </div>
     </div>
 
     <!-- Notification Toast Container -->

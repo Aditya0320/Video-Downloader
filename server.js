@@ -73,6 +73,38 @@ app.get('/api/saved-courses', (req, res) => {
     }
 });
 
+// Set custom destination folder
+app.post('/api/set-folder', (req, res) => {
+    const { folder } = req.body;
+    if (!folder) {
+        return res.status(400).json({ error: 'Folder path is required' });
+    }
+
+    try {
+        const newDir = downloader.setCustomDownloadDir(folder);
+        res.json({ success: true, downloadDir: newDir });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Open native Windows folder browser dialog
+app.post('/api/browse-folder', (req, res) => {
+    const psCmd = `powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.FolderBrowserDialog; $f.Description = 'Select Destination Folder for Video Downloads'; $f.ShowNewFolderButton = $true; if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $f.SelectedPath }"`;
+    exec(psCmd, (err, stdout) => {
+        if (err) {
+            console.error('Folder picker error:', err);
+            return res.status(500).json({ error: 'Failed to open folder picker' });
+        }
+        const selected = stdout.trim();
+        if (selected) {
+            const newDir = downloader.setCustomDownloadDir(selected);
+            return res.json({ success: true, folder: newDir });
+        }
+        res.json({ success: false, cancelled: true });
+    });
+});
+
 app.post('/api/download', (req, res) => {
     const { lessonNumbers, quality } = req.body;
     if (!Array.isArray(lessonNumbers) || lessonNumbers.length === 0) {
@@ -104,10 +136,11 @@ app.post('/api/cancel', (req, res) => {
 
 app.post('/api/open-folder', (req, res) => {
     const downloadDir = downloader.downloadDir;
-    exec(`explorer.exe "${downloadDir}"`, (err) => {
+    // Use PowerShell Invoke-Item so it doesn't fail with code 1
+    exec(`powershell -NoProfile -Command "Invoke-Item -Path '${downloadDir}'"`, (err) => {
         if (err) {
-            console.error('Failed to open explorer:', err);
-            return res.status(500).json({ error: 'Failed to open folder' });
+            console.warn('Fallback opening folder with explorer...');
+            exec(`explorer.exe "${downloadDir}"`);
         }
         res.json({ success: true });
     });
