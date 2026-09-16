@@ -13,6 +13,7 @@ downloads/
 *.ytdl
 
 # Logs and environment
+courses/
 *.log
 .env
 .DS_Store

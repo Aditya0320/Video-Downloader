@@ -187,6 +187,110 @@ body {
     box-shadow: 0 0 0 2px var(--primary-glow);
 }
 
+/* URL Loader Card */
+.url-loader-card {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.85));
+    border: 1px solid var(--border-highlight);
+    border-radius: var(--radius-md);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 32px rgba(79, 70, 229, 0.15);
+    backdrop-filter: blur(16px);
+}
+
+.url-loader-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.loader-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #818cf8;
+}
+
+.url-card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.url-card-tip {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.url-form {
+    margin-bottom: 12px;
+}
+
+.url-input-wrapper {
+    display: flex;
+    gap: 12px;
+}
+
+.styled-url-input {
+    flex: 1;
+    background: rgba(10, 13, 24, 0.8);
+    border: 1px solid var(--border-color);
+    padding: 12px 18px;
+    border-radius: var(--radius-sm);
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.styled-url-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.course-presets-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.presets-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+}
+
+.preset-chip {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.preset-chip:hover {
+    background: rgba(79, 70, 229, 0.2);
+    border-color: var(--primary-color);
+    color: #fff;
+}
+
+.preset-chip.active {
+    background: rgba(79, 70, 229, 0.3);
+    border-color: #818cf8;
+    color: #fff;
+}
+
 /* Course Hero */
 .course-hero {
     display: grid;

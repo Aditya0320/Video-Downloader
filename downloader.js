@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const EventEmitter = require('events');
+const courseParser = require('./course_parser');
 
 function cleanHtmlToText(html) {
     if (!html) return '';
@@ -26,46 +27,94 @@ function cleanHtmlToText(html) {
     return text;
 }
 
+function sanitizeFolderName(name) {
+    return name.replace(/[\\/:*?"<>|]/g, '').trim();
+}
+
 class DownloaderEngine extends EventEmitter {
     constructor() {
         super();
-        // Target folder specified by user
-        this.downloadDir = 'D:\\Survey of the Old Testament';
-        if (!fs.existsSync(this.downloadDir)) {
-            try {
-                fs.mkdirSync(this.downloadDir, { recursive: true });
-            } catch (e) {
-                console.error('Could not create directory on D:, falling back to local downloads', e);
-                this.downloadDir = path.join(__dirname, 'downloads');
-                if (!fs.existsSync(this.downloadDir)) fs.mkdirSync(this.downloadDir, { recursive: true });
-            }
-        }
-
         this.lessonsFile = path.join(__dirname, 'all_lessons.json');
         this.lessons = JSON.parse(fs.readFileSync(this.lessonsFile, 'utf8'));
 
-        // Current queue and state
+        // Default Course Info (BT504)
+        this.course = {
+            url: 'https://www.biblicaltraining.org/learn/institute/survey-of-biblical-theology-bt504',
+            title: 'Survey of Biblical Theology',
+            slug: 'survey-of-biblical-theology-bt504',
+            code: 'BT504',
+            instructor: 'Dr. Thomas Schreiner',
+            length: '18 hours 30 minutes',
+            totalLessons: 27
+        };
+
+        // Destination directory: D:\Survey of the Old Testament (or D:\<Course Title>)
+        this.setDownloadDirectory('D:\\Survey of the Old Testament');
+
         this.queue = [];
         this.isProcessing = false;
         this.currentTask = null;
         this.activeProcess = null;
-        this.quality = '1080'; // 1080, 720, 480
+        this.quality = '1080';
 
-        // Per-lesson runtime status map
         this.lessonStatus = {};
         this.initializeStatus();
     }
 
+    setDownloadDirectory(dir) {
+        this.downloadDir = dir;
+        if (!fs.existsSync(this.downloadDir)) {
+            try {
+                fs.mkdirSync(this.downloadDir, { recursive: true });
+            } catch (e) {
+                console.error(`Could not create ${dir}, falling back to local downloads`, e.message);
+                this.downloadDir = path.join(__dirname, 'downloads', sanitizeFolderName(this.course.title));
+                if (!fs.existsSync(this.downloadDir)) fs.mkdirSync(this.downloadDir, { recursive: true });
+            }
+        }
+    }
+
+    async loadCourseByUrl(url) {
+        this.stopAll();
+        console.log(`[Downloader] Loading dynamic course: ${url}`);
+        const courseData = await courseParser.fetchCourseFromUrl(url);
+
+        this.course = {
+            url: courseData.url,
+            title: courseData.title,
+            slug: courseData.slug,
+            code: courseData.code || 'BT',
+            instructor: courseData.instructor,
+            length: courseData.length,
+            totalLessons: courseData.totalLessons
+        };
+
+        this.lessons = courseData.lessons;
+
+        // Auto-configure download directory
+        const dDriveExists = fs.existsSync('D:\\');
+        const folderName = sanitizeFolderName(this.course.title);
+        const targetPath = dDriveExists ? path.join('D:\\', folderName) : path.join(__dirname, 'downloads', folderName);
+        this.setDownloadDirectory(targetPath);
+
+        this.lessonStatus = {};
+        this.initializeStatus();
+        this.emit('course-loaded', this.getCourseSummary());
+        return this.getCourseSummary();
+    }
+
     getVideoFilename(lesson) {
+        const prefix = this.course.code ? this.course.code : 'Lesson';
         const numStr = String(lesson.lessonNumber).padStart(2, '0');
         const cleanTitle = lesson.title.trim().replace(/[\\/:*?"<>|]/g, '_');
-        return `BT504 - Lesson ${numStr} - ${cleanTitle}.mp4`;
+        return `${prefix} - Lesson ${numStr} - ${cleanTitle}.mp4`;
     }
 
     getTranscriptFilename(lesson) {
+        const prefix = this.course.code ? this.course.code : 'Lesson';
         const numStr = String(lesson.lessonNumber).padStart(2, '0');
         const cleanTitle = lesson.title.trim().replace(/[\\/:*?"<>|]/g, '_');
-        return `BT504 - Lesson ${numStr} - ${cleanTitle}.txt`;
+        return `${prefix} - Lesson ${numStr} - ${cleanTitle}.txt`;
     }
 
     initializeStatus() {
@@ -103,9 +152,31 @@ class DownloaderEngine extends EventEmitter {
         }
     }
 
+    getCourseSummary() {
+        const lessons = this.getLessons();
+        const completedCount = lessons.filter(l => l.statusInfo.status === 'completed').length;
+        const totalSize = lessons.reduce((acc, l) => acc + (l.statusInfo.size || 0), 0);
+        const transcriptCount = lessons.filter(l => l.statusInfo.transcriptExists).length;
+
+        return {
+            course: this.course,
+            targetDir: this.downloadDir,
+            totalLessons: lessons.length,
+            completedCount,
+            transcriptCount,
+            totalSize,
+            queue: this.queue,
+            currentTask: this.currentTask,
+            isProcessing: this.isProcessing,
+            quality: this.quality,
+            lessons
+        };
+    }
+
     getLessons() {
         for (const lesson of this.lessons) {
             const current = this.lessonStatus[lesson.lessonNumber];
+            if (!current) continue;
             if (current.status !== 'downloading' && current.status !== 'muxing' && current.status !== 'queued') {
                 const videoPath = path.join(this.downloadDir, current.filename);
                 if (fs.existsSync(videoPath)) {
@@ -126,7 +197,7 @@ class DownloaderEngine extends EventEmitter {
             title: l.title.trim(),
             filename: this.getVideoFilename(l),
             transcriptFilename: this.getTranscriptFilename(l),
-            statusInfo: this.lessonStatus[l.lessonNumber]
+            statusInfo: this.lessonStatus[l.lessonNumber] || {}
         }));
     }
 
@@ -154,9 +225,9 @@ class DownloaderEngine extends EventEmitter {
 
             const numStr = String(lesson.lessonNumber).padStart(2, '0');
             let content = `================================================================================\n`;
-            content += `COURSE: Survey of Biblical Theology (BT504)\n`;
+            content += `COURSE: ${this.course.title} (${this.course.code || 'BT'})\n`;
             content += `LESSON ${numStr}: ${lesson.title.trim()}\n`;
-            content += `INSTRUCTOR: Dr. Thomas Schreiner\n`;
+            content += `INSTRUCTOR: ${this.course.instructor}\n`;
             content += `================================================================================\n\n`;
 
             if (cleanOutline) {
@@ -174,8 +245,10 @@ class DownloaderEngine extends EventEmitter {
             }
 
             fs.writeFileSync(targetFile, content, 'utf8');
-            this.lessonStatus[lesson.lessonNumber].transcriptExists = true;
-            this.emit('update', { lessonNumber: lesson.lessonNumber, ...this.lessonStatus[lesson.lessonNumber] });
+            if (this.lessonStatus[lesson.lessonNumber]) {
+                this.lessonStatus[lesson.lessonNumber].transcriptExists = true;
+                this.emit('update', { lessonNumber: lesson.lessonNumber, ...this.lessonStatus[lesson.lessonNumber] });
+            }
             return true;
         } catch (err) {
             console.error(`[Transcript Error] Lesson ${lesson.lessonNumber}:`, err.message);
@@ -228,16 +301,18 @@ class DownloaderEngine extends EventEmitter {
             if (!lesson) continue;
 
             const current = this.lessonStatus[num];
-            if (current.status === 'completed' && !lessonNumbers._force) {
+            if (current && current.status === 'completed' && !lessonNumbers._force) {
                 continue;
             }
 
             if (!this.queue.includes(num)) {
                 this.queue.push(num);
-                this.lessonStatus[num].status = 'queued';
-                this.lessonStatus[num].progress = 0;
-                this.lessonStatus[num].error = null;
-                this.emit('update', { lessonNumber: num, ...this.lessonStatus[num] });
+                if (this.lessonStatus[num]) {
+                    this.lessonStatus[num].status = 'queued';
+                    this.lessonStatus[num].progress = 0;
+                    this.lessonStatus[num].error = null;
+                    this.emit('update', { lessonNumber: num, ...this.lessonStatus[num] });
+                }
             }
         }
 
@@ -254,7 +329,7 @@ class DownloaderEngine extends EventEmitter {
         const lesson = this.lessons.find(l => l.lessonNumber === lessonNumber);
         const statusObj = this.lessonStatus[lessonNumber];
 
-        if (!lesson) {
+        if (!lesson || !statusObj) {
             this.isProcessing = false;
             return this.processQueue();
         }
@@ -268,8 +343,12 @@ class DownloaderEngine extends EventEmitter {
         try {
             console.log(`Starting download for Lesson ${lessonNumber}: "${lesson.title}"`);
 
-            // 1. Download transcript if not already saved
+            // 1. Download transcript
             await this.downloadTranscript(lesson);
+
+            if (!lesson.vimeoId) {
+                throw new Error('No Vimeo video available for this lesson');
+            }
 
             // 2. Fetch Vimeo HLS Stream
             const hlsUrl = await this.getVimeoHlsUrl(lesson.vimeoId);
@@ -281,7 +360,7 @@ class DownloaderEngine extends EventEmitter {
                 ? 'bestvideo[height<=1080]+bestaudio/best[height<=1080]'
                 : `bestvideo[height<=${this.quality}]+bestaudio/best[height<=${this.quality}]`;
 
-            // HIGH-SPEED MULTI-CONNECTION FLAGS: 16 concurrent fragments, 16MB buffer
+            // HIGH-SPEED MULTI-CONNECTION FLAGS (16 concurrent fragments)
             const args = [
                 '--concurrent-fragments', '16',
                 '--buffer-size', '16M',
@@ -391,7 +470,7 @@ class DownloaderEngine extends EventEmitter {
 
     cancelCurrent() {
         if (this.activeProcess) {
-            if (this.currentTask !== null) {
+            if (this.currentTask !== null && this.lessonStatus[this.currentTask]) {
                 this.lessonStatus[this.currentTask].status = 'cancelled';
                 this.lessonStatus[this.currentTask].speed = '';
                 this.lessonStatus[this.currentTask].eta = '';
@@ -406,8 +485,10 @@ class DownloaderEngine extends EventEmitter {
 
     stopAll() {
         for (const num of this.queue) {
-            this.lessonStatus[num].status = 'idle';
-            this.emit('update', { lessonNumber: num, ...this.lessonStatus[num] });
+            if (this.lessonStatus[num]) {
+                this.lessonStatus[num].status = 'idle';
+                this.emit('update', { lessonNumber: num, ...this.lessonStatus[num] });
+            }
         }
         this.queue = [];
         this.cancelCurrent();

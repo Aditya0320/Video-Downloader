@@ -2,13 +2,28 @@ const downloader = require('./downloader');
 
 async function runCli() {
     console.log('=====================================================');
-    console.log(' BiblicalTraining.org 1080p Video & Transcript Downloader');
-    console.log(' Course: Survey of Biblical Theology (BT504)');
-    console.log(` Target Folder: ${downloader.downloadDir}`);
-    console.log(' Speed: 16 Concurrent Fragment Connections (Multi-Threaded)');
+    console.log(' BiblicalTraining.org Universal Video & Transcript Downloader');
     console.log('=====================================================\n');
 
     const args = process.argv.slice(2);
+
+    // Check if a custom course URL was provided
+    let customUrl = null;
+    for (const arg of args) {
+        if (arg.startsWith('--url=')) {
+            customUrl = arg.split('=')[1].replace(/^["']|["']$/g, '');
+        }
+    }
+
+    if (customUrl) {
+        console.log(`Loading custom course URL: ${customUrl}...`);
+        await downloader.loadCourseByUrl(customUrl);
+    }
+
+    console.log(`Active Course: ${downloader.course.title} (${downloader.course.code || 'BT'})`);
+    console.log(`Instructor: ${downloader.course.instructor}`);
+    console.log(`Save Directory: ${downloader.downloadDir}`);
+    console.log('Speed: 16 Concurrent Fragment Connections (Multi-Threaded)\n');
 
     // Option: download only transcripts
     if (args.includes('--transcripts-only')) {

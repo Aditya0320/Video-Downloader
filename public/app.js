@@ -1,5 +1,12 @@
 // Application State
 let state = {
+    course: {
+        title: 'Survey of Biblical Theology',
+        instructor: 'Dr. Thomas Schreiner',
+        code: 'BT504',
+        length: '18 hours 30 minutes',
+        url: ''
+    },
     targetDir: 'D:\\Survey of the Old Testament',
     lessons: [],
     selected: new Set(),
@@ -22,7 +29,23 @@ const searchInput = document.getElementById('searchInput');
 const filterTabs = document.querySelectorAll('.filter-tabs .tab');
 const qualitySelect = document.getElementById('qualitySelect');
 
+// Course URL Form Elements
+const courseUrlForm = document.getElementById('courseUrlForm');
+const inputCourseUrl = document.getElementById('inputCourseUrl');
+const btnLoadCourse = document.getElementById('btnLoadCourse');
+const btnLoadText = document.getElementById('btnLoadText');
+const presetChips = document.querySelectorAll('.preset-chip');
+
+// Course Info Header Elements
+const courseHeading = document.getElementById('courseHeading');
+const courseInstructor = document.getElementById('courseInstructor');
+const courseLectureCount = document.getElementById('courseLectureCount');
+const destFolderLabel = document.getElementById('destFolderLabel');
+const badgeFormat = document.getElementById('badgeFormat');
+
+// Action Buttons
 const btnDownloadAll = document.getElementById('btnDownloadAll');
+const btnDownloadAllText = document.getElementById('btnDownloadAllText');
 const btnDownloadTranscripts = document.getElementById('btnDownloadTranscripts');
 const btnDownloadSelected = document.getElementById('btnDownloadSelected');
 const btnDownloadSelectedText = document.getElementById('btnDownloadSelectedText');
@@ -30,7 +53,6 @@ const btnCancelAll = document.getElementById('btnCancelAll');
 const btnOpenFolder = document.getElementById('btnOpenFolder');
 const btnSelectAll = document.getElementById('btnSelectAll');
 const btnDeselectAll = document.getElementById('btnDeselectAll');
-const destFolderLabel = document.getElementById('destFolderLabel');
 
 // Stats Elements
 const statTotalLessons = document.getElementById('statTotalLessons');
@@ -82,7 +104,7 @@ function setupSSE() {
 function handleServerEvent(msg) {
     if (msg.type === 'progress') {
         const lesson = state.lessons.find(l => l.lessonNumber === msg.lessonNumber);
-        if (lesson) {
+        if (lesson && lesson.statusInfo) {
             lesson.statusInfo.progress = msg.progress;
             lesson.statusInfo.speed = msg.speed;
             lesson.statusInfo.eta = msg.eta;
@@ -98,7 +120,7 @@ function handleServerEvent(msg) {
         updateCardProgress(msg.lessonNumber, msg.progress, msg.speed, msg.eta);
     } else if (msg.type === 'update') {
         const lesson = state.lessons.find(l => l.lessonNumber === msg.lessonNumber);
-        if (lesson) {
+        if (lesson && lesson.statusInfo) {
             Object.assign(lesson.statusInfo, msg);
             if (msg.status === 'completed') {
                 showToast(`Lesson ${msg.lessonNumber} video & transcript saved!`, 'success');
@@ -108,6 +130,9 @@ function handleServerEvent(msg) {
         }
         updateAllStats();
         renderLessons();
+    } else if (msg.type === 'course-loaded') {
+        applyCourseData(msg);
+        showToast(`Loaded "${state.course.title}" (${state.lessons.length} lessons)`, 'success');
     }
 }
 
@@ -116,21 +141,65 @@ async function fetchLessons() {
     try {
         const res = await fetch('/api/lessons');
         const data = await res.json();
-        state.lessons = data.lessons;
-        state.targetDir = data.targetDir || state.targetDir;
-        if (destFolderLabel) destFolderLabel.textContent = state.targetDir;
-
-        state.queue = data.queue || [];
-        state.currentTask = data.currentTask;
-        state.isProcessing = data.isProcessing;
-        if (data.quality) state.quality = data.quality;
-
-        updateAllStats();
-        renderLessons();
-        updateActiveBanner();
+        applyCourseData(data);
     } catch (err) {
-        console.error('Failed to load lessons:', err);
+        console.error('Failed to load course lessons:', err);
         showToast('Error connecting to server', 'error');
+    }
+}
+
+function applyCourseData(data) {
+    if (data.course) state.course = data.course;
+    state.lessons = data.lessons || [];
+    state.targetDir = data.targetDir || state.targetDir;
+    state.queue = data.queue || [];
+    state.currentTask = data.currentTask;
+    state.isProcessing = data.isProcessing;
+    if (data.quality) state.quality = data.quality;
+
+    state.selected.clear();
+    updateCourseHeaderUI();
+    updateAllStats();
+    renderLessons();
+    updateActiveBanner();
+}
+
+function updateCourseHeaderUI() {
+    if (courseHeading) courseHeading.textContent = state.course.title || 'Course';
+    if (courseInstructor) courseInstructor.textContent = state.course.instructor || 'Instructor';
+    if (courseLectureCount) courseLectureCount.textContent = `${state.lessons.length} In-Depth Lectures`;
+    if (destFolderLabel) destFolderLabel.textContent = state.targetDir;
+    if (btnDownloadAllText) btnDownloadAllText.textContent = `Download All ${state.lessons.length} Videos (1080p)`;
+    if (badgeFormat && state.course.code) badgeFormat.textContent = state.course.code;
+}
+
+// Load Course from URL
+async function loadCourseUrl(url) {
+    if (!url) return;
+
+    btnLoadCourse.disabled = true;
+    btnLoadText.textContent = 'Loading Course...';
+
+    try {
+        const res = await fetch('/api/load-course', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            applyCourseData(data);
+            showToast(`Loaded: ${data.course.title}`, 'success');
+        } else {
+            showToast(data.error || 'Failed to load course from URL', 'error');
+        }
+    } catch (err) {
+        console.error('Course load error:', err);
+        showToast('Failed to connect or fetch course URL', 'error');
+    } finally {
+        btnLoadCourse.disabled = false;
+        btnLoadText.textContent = 'Load Topic';
     }
 }
 
@@ -140,13 +209,11 @@ function renderLessons() {
 
     const query = state.search.toLowerCase().trim();
     const filtered = state.lessons.filter(lesson => {
-        // Search filter
         const matchTitle = lesson.title.toLowerCase().includes(query);
         const matchNum = String(lesson.lessonNumber).includes(query);
         if (query && !matchTitle && !matchNum) return false;
 
-        // Tab filter
-        const status = lesson.statusInfo.status;
+        const status = lesson.statusInfo?.status || 'idle';
         if (state.filter === 'completed' && status !== 'completed') return false;
         if (state.filter === 'pending' && status === 'completed') return false;
         return true;
@@ -170,7 +237,8 @@ function renderLessons() {
 
 function createLessonCard(lesson) {
     const card = document.createElement('div');
-    const status = lesson.statusInfo.status || 'idle';
+    const statusInfo = lesson.statusInfo || {};
+    const status = statusInfo.status || 'idle';
     card.className = `lesson-card status-${status}`;
     card.id = `lesson-card-${lesson.lessonNumber}`;
 
@@ -179,16 +247,16 @@ function createLessonCard(lesson) {
     const isCompleted = status === 'completed';
     const isDownloading = status === 'downloading' || status === 'muxing';
     const isQueued = status === 'queued';
-    const hasTranscript = lesson.statusInfo.transcriptExists;
+    const hasTranscript = statusInfo.transcriptExists;
 
-    let statusText = 'Ready (1080p)';
+    let statusText = lesson.vimeoId ? 'Ready (1080p)' : 'Audio Only';
     if (isCompleted) statusText = 'Completed (Video + Transcript)';
     else if (status === 'muxing') statusText = 'Muxing MP4 with ffmpeg...';
-    else if (isDownloading) statusText = `Downloading (${Math.floor(lesson.statusInfo.progress || 0)}%)`;
+    else if (isDownloading) statusText = `Downloading (${Math.floor(statusInfo.progress || 0)}%)`;
     else if (isQueued) statusText = 'In Queue';
     else if (status === 'error') statusText = 'Download Failed';
 
-    const fileSizeStr = lesson.statusInfo.size ? ` • ${(lesson.statusInfo.size / (1024 * 1024)).toFixed(1)} MB` : '';
+    const fileSizeStr = statusInfo.size ? ` • ${(statusInfo.size / (1024 * 1024)).toFixed(1)} MB` : '';
 
     card.innerHTML = `
         <div class="card-top">
@@ -201,7 +269,7 @@ function createLessonCard(lesson) {
                 </div>
                 <h4 class="lesson-title">${escapeHtml(lesson.title)}</h4>
                 <div class="lesson-details">
-                    <span>Vimeo ID: <code>${lesson.vimeoId}</code></span>
+                    <span>${lesson.vimeoId ? `Vimeo ID: <code>${lesson.vimeoId}</code>` : 'Format: Audio Stream'}</span>
                     <span>${fileSizeStr}</span>
                 </div>
             </div>
@@ -214,14 +282,14 @@ function createLessonCard(lesson) {
                     <span class="status-text">${statusText}</span>
                 </div>
                 <span class="speed-eta-text" style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-secondary);">
-                    ${lesson.statusInfo.speed ? `${lesson.statusInfo.speed}` : ''}
+                    ${statusInfo.speed ? `${statusInfo.speed}` : ''}
                 </span>
             </div>
 
             <div class="progress-bar-bg">
                 <div class="progress-bar-fill ${isDownloading ? 'animated-gradient' : ''}" 
                      id="card-progress-${lesson.lessonNumber}" 
-                     style="width: ${lesson.statusInfo.progress || (isCompleted ? 100 : 0)}%;"></div>
+                     style="width: ${statusInfo.progress || (isCompleted ? 100 : 0)}%;"></div>
             </div>
 
             <div class="card-actions">
@@ -281,7 +349,7 @@ function updateActiveBanner() {
     }
 
     const lesson = state.lessons.find(l => l.lessonNumber === currentTask);
-    if (!lesson || lesson.statusInfo.status === 'completed') {
+    if (!lesson || lesson.statusInfo?.status === 'completed') {
         activeDownloadSection.style.display = 'none';
         btnCancelAll.style.display = 'none';
         return;
@@ -294,13 +362,13 @@ function updateActiveBanner() {
     activeTitle.textContent = `Lesson ${numStr}: ${lesson.title}`;
     activeFilename.textContent = `${state.targetDir}\\${lesson.filename}`;
 
-    const progress = state.activeMetrics.progress || lesson.statusInfo.progress || 0;
+    const progress = state.activeMetrics.progress || lesson.statusInfo?.progress || 0;
     activePercent.textContent = `${progress.toFixed(1)}%`;
-    activeSpeed.textContent = state.activeMetrics.speed || lesson.statusInfo.speed || '-- MB/s';
-    activeEta.textContent = state.activeMetrics.eta || lesson.statusInfo.eta || '--:--';
+    activeSpeed.textContent = state.activeMetrics.speed || lesson.statusInfo?.speed || '-- MB/s';
+    activeEta.textContent = state.activeMetrics.eta || lesson.statusInfo?.eta || '--:--';
     activeProgressBar.style.width = `${progress}%`;
 
-    if (lesson.statusInfo.status === 'muxing') {
+    if (lesson.statusInfo?.status === 'muxing') {
         activeStatusBadge.textContent = 'MUXING MP4';
         activeStatusBadge.style.background = 'rgba(139, 92, 246, 0.3)';
         activeStatusBadge.style.borderColor = '#8b5cf6';
@@ -311,12 +379,12 @@ function updateActiveBanner() {
     }
 }
 
-// Update Collection & Header Stats
+// Update Collection Stats
 function updateAllStats() {
     const total = state.lessons.length;
-    const completed = state.lessons.filter(l => l.statusInfo.status === 'completed').length;
-    const transcriptCount = state.lessons.filter(l => l.statusInfo.transcriptExists).length;
-    const queuedCount = state.lessons.filter(l => l.statusInfo.status === 'queued').length;
+    const completed = state.lessons.filter(l => l.statusInfo?.status === 'completed').length;
+    const transcriptCount = state.lessons.filter(l => l.statusInfo?.transcriptExists).length;
+    const queuedCount = state.lessons.filter(l => l.statusInfo?.status === 'queued').length;
 
     statTotalLessons.textContent = total;
     statCompleted.textContent = `${completed} / ${total}`;
@@ -391,6 +459,26 @@ async function cancelDownload(all = false) {
 
 // Setup Event Listeners
 function setupEventListeners() {
+    // Course URL Form Submission
+    courseUrlForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const url = inputCourseUrl.value.trim();
+        if (url) {
+            loadCourseUrl(url);
+        }
+    });
+
+    // Preset Chips
+    presetChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            presetChips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            const url = chip.dataset.url;
+            inputCourseUrl.value = url;
+            loadCourseUrl(url);
+        });
+    });
+
     // Search
     searchInput.addEventListener('input', (e) => {
         state.search = e.target.value;
@@ -407,7 +495,7 @@ function setupEventListeners() {
         });
     });
 
-    // Download All 27 Button
+    // Download All Button
     btnDownloadAll.addEventListener('click', () => {
         const allNumbers = state.lessons.map(l => l.lessonNumber);
         downloadLessons(allNumbers);
@@ -416,7 +504,7 @@ function setupEventListeners() {
     // Download Transcripts Button
     if (btnDownloadTranscripts) {
         btnDownloadTranscripts.addEventListener('click', async () => {
-            showToast('Fetching and saving all transcripts to D:...', 'info');
+            showToast('Fetching and saving all transcripts...', 'info');
             try {
                 const res = await fetch('/api/download-transcripts', { method: 'POST' });
                 const d = await res.json();
@@ -438,7 +526,7 @@ function setupEventListeners() {
     // Select All
     btnSelectAll.addEventListener('click', () => {
         state.lessons.forEach(l => {
-            if (l.statusInfo.status !== 'completed') {
+            if (l.statusInfo?.status !== 'completed') {
                 state.selected.add(l.lessonNumber);
             }
         });

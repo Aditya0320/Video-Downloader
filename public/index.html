@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BiblicalTraining 1080p Video & Transcript Downloader | Survey of Biblical Theology</title>
-    <meta name="description" content="High Quality 1080p Video & Transcript Downloader for BiblicalTraining course: Survey of Biblical Theology (BT504)">
+    <title>Universal BiblicalTraining 1080p Video & Transcript Downloader</title>
+    <meta name="description" content="Universal Video & Transcript Downloader for ANY BiblicalTraining course or lecture series">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -27,8 +27,8 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="brand-title">BT504 Video & Transcript Downloader</h1>
-                    <p class="brand-subtitle">Survey of Biblical Theology • 27 High-Definition Lessons & Transcripts</p>
+                    <h1 class="brand-title">BiblicalTraining Universal Downloader</h1>
+                    <p class="brand-subtitle">Download Full 1080p Videos & Transcripts from Any Course Topic</p>
                 </div>
             </div>
 
@@ -46,28 +46,70 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                     </svg>
-                    <span>Open D:\ Folder</span>
+                    <span>Open Save Folder</span>
                 </button>
             </div>
         </header>
+
+        <!-- Dynamic Course URL Loader Box -->
+        <section class="url-loader-card">
+            <div class="url-loader-header">
+                <div class="loader-title-group">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                    <span class="url-card-title">Load Any Course Topic</span>
+                </div>
+                <span class="url-card-tip">Paste any course URL from biblicaltraining.org to extract all lectures & transcripts</span>
+            </div>
+
+            <form id="courseUrlForm" class="url-form">
+                <div class="url-input-wrapper">
+                    <input type="url" id="inputCourseUrl" class="styled-url-input" 
+                           placeholder="https://www.biblicaltraining.org/learn/..." 
+                           required>
+                    <button type="submit" id="btnLoadCourse" class="btn btn-primary">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                        <span id="btnLoadText">Load Topic</span>
+                    </button>
+                </div>
+            </form>
+
+            <div class="course-presets-row">
+                <span class="presets-label">Quick Presets:</span>
+                <button type="button" class="preset-chip active" data-url="https://www.biblicaltraining.org/learn/institute/survey-of-biblical-theology-bt504">
+                    Survey of Biblical Theology (BT504)
+                </button>
+                <button type="button" class="preset-chip" data-url="https://www.biblicaltraining.org/learn/foundations/th101-52-major-stories-of-the-bible">
+                    52 Major Stories of the Bible (TH101)
+                </button>
+                <button type="button" class="preset-chip" data-url="https://www.biblicaltraining.org/learn/foundations/th100-life-is-a-journey">
+                    Life is a Journey (TH100)
+                </button>
+            </div>
+        </section>
 
         <!-- Course Banner & Overview -->
         <section class="course-hero">
             <div class="course-info">
                 <div class="badge-row">
-                    <span class="badge badge-primary">Institute Course</span>
+                    <span id="badgeFormat" class="badge badge-primary">Institute Course</span>
                     <span class="badge badge-accent">⚡ Turbo 16-Thread (High Speed)</span>
                     <span class="badge badge-success">Direct Vimeo 1080p Stream</span>
                     <span class="badge badge-warning">Transcripts Included</span>
                 </div>
-                <h2 class="course-heading">Survey of Biblical Theology</h2>
-                <p class="course-instructor">Instructor: <strong>Dr. Thomas Schreiner</strong> • 27 In-Depth Lectures</p>
+                <h2 id="courseHeading" class="course-heading">Survey of Biblical Theology</h2>
+                <p class="course-instructor">Instructor: <strong id="courseInstructor">Dr. Thomas Schreiner</strong> • <span id="courseLectureCount">27 In-Depth Lectures</span></p>
                 
                 <div class="destination-callout">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                     </svg>
-                    <span>Save Folder: <strong id="destFolderLabel">D:\Survey of the Old Testament</strong></span>
+                    <span>Target Folder: <strong id="destFolderLabel">D:\Survey of the Old Testament</strong></span>
                 </div>
 
                 <p class="course-desc">
@@ -82,7 +124,7 @@
                             <polyline points="7 10 12 15 17 10"></polyline>
                             <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
-                        <span>Download All 27 Videos (1080p)</span>
+                        <span id="btnDownloadAllText">Download All Videos (1080p)</span>
                     </button>
 
                     <button id="btnDownloadTranscripts" class="btn btn-secondary btn-large">
@@ -125,11 +167,11 @@
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Videos Downloaded</span>
-                        <span id="statCompleted" class="stat-value text-success">1</span>
+                        <span id="statCompleted" class="stat-value text-success">0</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Transcripts Saved</span>
-                        <span id="statTranscripts" class="stat-value text-accent">26</span>
+                        <span id="statTranscripts" class="stat-value text-accent">0</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Queue Length</span>
@@ -140,10 +182,10 @@
                 <div class="overall-progress-container">
                     <div class="progress-labels">
                         <span>Video Completion</span>
-                        <span id="overallProgressText">4%</span>
+                        <span id="overallProgressText">0%</span>
                     </div>
                     <div class="progress-bar-bg">
-                        <div id="overallProgressBar" class="progress-bar-fill" style="width: 4%;"></div>
+                        <div id="overallProgressBar" class="progress-bar-fill" style="width: 0%;"></div>
                     </div>
                 </div>
             </div>
@@ -155,7 +197,7 @@
                 <div class="active-title-group">
                     <span class="pulsing-dot"></span>
                     <span id="activeStatusBadge" class="badge badge-downloading">DOWNLOADING (16X TURBO)</span>
-                    <h3 id="activeTitle" class="active-lesson-title">Lesson 01: History of Biblical Theology</h3>
+                    <h3 id="activeTitle" class="active-lesson-title">Lesson: Title</h3>
                 </div>
                 <button id="btnCancelActive" class="btn btn-small btn-danger-ghost">Cancel</button>
             </div>
@@ -164,7 +206,7 @@
                 <div class="metric"><span class="m-label">Progress:</span> <strong id="activePercent">0.0%</strong></div>
                 <div class="metric"><span class="m-label">Speed:</span> <strong id="activeSpeed">-- MB/s</strong></div>
                 <div class="metric"><span class="m-label">ETA:</span> <strong id="activeEta">--:--</strong></div>
-                <div class="metric"><span class="m-label">Destination File:</span> <code id="activeFilename">BT504 - Lesson 01.mp4</code></div>
+                <div class="metric"><span class="m-label">Destination File:</span> <code id="activeFilename">Lesson.mp4</code></div>
             </div>
 
             <div class="progress-bar-bg progress-bar-large">
@@ -183,7 +225,7 @@
             </div>
 
             <div class="filter-tabs">
-                <button class="tab active" data-filter="all">All (27)</button>
+                <button class="tab active" data-filter="all">All</button>
                 <button class="tab" data-filter="pending">Pending</button>
                 <button class="tab" data-filter="completed">Completed</button>
             </div>

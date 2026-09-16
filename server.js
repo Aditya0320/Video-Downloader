@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const { exec } = require('child_process');
 const downloader = require('./downloader');
+const courseParser = require('./course_parser');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,26 +41,36 @@ function broadcast(event, data) {
 
 downloader.on('update', (data) => broadcast('update', data));
 downloader.on('progress', (data) => broadcast('progress', data));
+downloader.on('course-loaded', (data) => broadcast('course-loaded', data));
 
 // API Routes
 app.get('/api/lessons', (req, res) => {
-    const lessons = downloader.getLessons();
-    const completedCount = lessons.filter(l => l.statusInfo.status === 'completed').length;
-    const totalSize = lessons.reduce((acc, l) => acc + (l.statusInfo.size || 0), 0);
-    const transcriptCount = lessons.filter(l => l.statusInfo.transcriptExists).length;
+    res.json(downloader.getCourseSummary());
+});
 
-    res.json({
-        targetDir: downloader.downloadDir,
-        totalLessons: lessons.length,
-        completedCount,
-        transcriptCount,
-        totalSize,
-        queue: downloader.queue,
-        currentTask: downloader.currentTask,
-        isProcessing: downloader.isProcessing,
-        quality: downloader.quality,
-        lessons
-    });
+app.post('/api/load-course', async (req, res) => {
+    const { url } = req.body;
+    if (!url) {
+        return res.status(400).json({ error: 'Please provide a valid course URL' });
+    }
+
+    try {
+        console.log(`[API] Loading course from URL: ${url}`);
+        const summary = await downloader.loadCourseByUrl(url);
+        res.json({ success: true, ...summary });
+    } catch (err) {
+        console.error('[API Error] Failed to load course:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/saved-courses', (req, res) => {
+    try {
+        const list = courseParser.getSavedCourses();
+        res.json(list);
+    } catch (e) {
+        res.json([]);
+    }
 });
 
 app.post('/api/download', (req, res) => {
@@ -103,6 +114,7 @@ app.post('/api/open-folder', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`BiblicalTraining Video Downloader Server running on http://localhost:${PORT}`);
+    console.log(`BiblicalTraining Universal Downloader Server running on http://localhost:${PORT}`);
+    console.log(`Active course: ${downloader.course.title}`);
     console.log(`Target save folder: ${downloader.downloadDir}`);
 });
